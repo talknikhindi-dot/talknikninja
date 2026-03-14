@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Talknik Ninja: Ultimate Combat | Talknik IT Studios</title>
+    <style>
+        :root {
+            --talknik-blue: #0984e3;
+            --primary: #fd79a8; /* Lady Ninja Pink */
+            --gold: #f1c40f;
+            --neon-glow: 0 0 15px rgba(9, 132, 227, 0.7);
+        }
+
+        body { margin: 0; overflow: hidden; background: #000; touch-action: none; font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; }
+        
+        /* Forest Motion Background */
+        #game-stage { 
+            width: 100vw; height: 100vh; position: relative; 
+            background: linear-gradient(180deg, #1e272e 0%, #000 100%); 
+            overflow: hidden; 
+        }
+        
+        .forest-layer {
+            position: absolute; width: 200%; height: 100%;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
+            opacity: 0.2; animation: scrollForest 12s linear infinite;
+        }
+        @keyframes scrollForest { from { left: 0; } to { left: -100%; } }
+
+        /* Separated Characters */
+        .character { position: absolute; z-index: 100; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.8)); transition: transform 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #lady-ninja { left: 50px; font-size: 80px; filter: drop-shadow(0 0 15px var(--primary)); } /* Separated, Left */
+        #hattori { left: 230px; font-size: 70px; filter: drop-shadow(0 0 15px var(--talknik-blue)); }  /* Forward, Separated */
+
+        /* Giant Enemies & Weapons */
+        .enemy { position: absolute; font-size: 110px; z-index: 80; filter: drop-shadow(0 0 35px #ff4757); }
+        .weapon { position: absolute; font-size: 30px; z-index: 95; }
+        
+        /* Premium UI */
+        #ui { 
+            position: fixed; top: 0; width: 100%; padding: 25px; 
+            display: flex; justify-content: space-between; align-items: center; z-index: 200; 
+            background: rgba(0,0,0,0.8); border-bottom: 3px solid var(--talknik-blue); 
+            color: white; box-sizing: border-box; backdrop-filter: blur(10px);
+        }
+        .hp-container { width: 220px; height: 15px; background: #333; border: 2px solid #fff; border-radius: 20px; overflow: hidden; }
+        #hp-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #2ecc71, #27ae60); transition: 0.3s; }
+
+        /* Branded Overlay Screen */
+        #overlay { 
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; z-index: 1000; color: white; text-align: center; 
+        }
+
+        /* ATTRACTIVE BRANDED TITLE */
+        .main-title { font-size: 70px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: -2px; line-height: 1; }
+        .talknik-part { color: var(--talknik-blue); text-shadow: var(--neon-glow); }
+        .ninja-part { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .sub-title { font-size: 20px; color: var(--primary); font-weight: bold; text-transform: uppercase; letter-spacing: 5px; margin-top: 5px; margin-bottom: 30px; }
+
+        .start-btn { 
+            padding: 20px 80px; font-size: 32px; background: var(--talknik-blue); 
+            color: white; border: none; border-radius: 50px; cursor: pointer; 
+            font-weight: bold; text-transform: uppercase; box-shadow: 0 10px 30px rgba(9, 132, 227, 0.4); 
+            transition: transform 0.1s;
+        }
+        .start-btn:active { transform: translateY(5px); box-shadow: 0 5px 20px rgba(9, 132, 227, 0.4); }
+
+        .brand-footer { position: absolute; bottom: 25px; color: #57606f; letter-spacing: 4px; font-size: 15px; font-weight: bold; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+
+    <div id="ui">
+        <div>
+            VITALITY BAR
+            <div class="hp-container"><div id="hp-fill"></div></div>
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 34px; font-weight: 900; color: var(--gold); text-shadow: 0 0 10px rgba(241, 196, 15, 0.5);">SCORE: <span id="score">0</span></div>
+            <div style="font-size: 12px; color: #aaa; text-transform: uppercase;">MISSION: JUNGLE DEPLOYMENT</div>
+        </div>
+    </div>
+
+    <div id="game-stage">
+        <div class="forest-layer"></div>
+        <div id="lady-ninja" class="character">👩‍🎤</div>
+        <div id="hattori" class="character">🥷</div>
+    </div>
+
+    <div id="overlay">
+        <div style="color: rgba(255,255,255,0.4); letter-spacing: 5px; font-size: 14px; margin-bottom: 10px;">TALKNIK IT STUDIOS PRESENTS</div>
+        
+        <h1 class="main-title">
+            <span class="talknik-part">TALKNIK</span> <span class="ninja-part">NINJA</span>
+        </h1>
+        <div class="sub-title">Ultimate Combat</div>
+        
+        <p style="font-size: 18px; color: #ccc; margin-bottom: 35px; line-height: 1.6;">Control Hattori & Lady Ninja Independently.<br>Eliminate Giant Enemies. Stay Alive!</p>
+        <button class="start-btn" onclick="initGame()">Deploy Mission</button>
+        <div class="brand-footer">Powered by Talknik IT Studios</div>
+    </div>
+
+    <script>
+        const audio = new (window.AudioContext || window.webkitAudioContext)();
+
+        // High-Volume SFX
+        function playSfx(f, t, d, v = 0.5) {
+            const o = audio.createOscillator();
+            const g = audio.createGain();
+            o.type = t;
+            o.frequency.setValueAtTime(f, audio.currentTime);
+            g.gain.setValueAtTime(v, audio.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + d);
+            o.connect(g); g.connect(audio.destination);
+            o.start(); o.stop(audio.currentTime + d);
+        }
+
+        const h = document.getElementById('hattori');
+        const ln = document.getElementById('lady-ninja');
+        const fill = document.getElementById('hp-fill');
+        const scEl = document.getElementById('score');
+        const stage = document.getElementById('game-stage');
+
+        let hy, lny, hp, score, running = false;
+        let hvel = 0, lnvel = 0, gravity = 0.38, lift = -9.5;
+        let enemies = [], weapons = [];
+
+        function initGame() {
+            if (audio.state === 'suspended') audio.resume();
+            hy = window.innerHeight * 0.6; 
+            lny = window.innerHeight * 0.3; // Separate starting heights
+            hp = 100; score = 0;
+            enemies.forEach(e => e.el.remove()); weapons.forEach(w => w.el.remove());
+            enemies = []; weapons = [];
+            document.getElementById('overlay').style.display = 'none';
+            running = true;
+            playSfx(500, 'square', 0.5, 0.6); // Start mission sound
+            spawnSystem(); attackSystem(); engine();
+        }
+
+        window.addEventListener('pointerdown', () => { 
+            if(running) {
+                hvel = lift; 
+                lnvel = lift - 0.5; // Slight offset for more dynamic movement
+                playSfx(250, 'sine', 0.2, 0.7); // Loud Jump
+            }
+        });
+
+        function spawnSystem() {
+            if(!running) return;
+            const el = document.createElement('div');
+            el.className = 'enemy'; el.innerText = '👺';
+            el.style.right = '-150px';
+            el.style.top = Math.random() * (window.innerHeight - 300) + 100 + 'px';
+            stage.appendChild(el);
+            enemies.push({ el, x: window.innerWidth, y: parseInt(el.style.top), s: 6 + (score/10) });
+            setTimeout(spawnSystem, Math.max(500, 1800 - (score * 5)));
+        }
+
+        function attackSystem() {
+            if(!running) return;
+            // Hattori Shuriken
+            const w1 = document.createElement('div');
+            w1.className = 'weapon'; w1.innerText = '⭐';
+            w1.style.left = '290px'; w1.style.top = (hy + 30) + 'px';
+            stage.appendChild(w1);
+            weapons.push({ el: w1, x: 290, y: hy + 30 });
+
+            // Lady Ninja Power Heart
+            const w2 = document.createElement('div');
+            w2.className = 'weapon'; w2.innerText = '💖';
+            w2.style.left = '130px'; w2.style.top = (lny + 40) + 'px';
+            stage.appendChild(w2);
+            weapons.push({ el: w2, x: 130, y: lny + 40 });
+
+            playSfx(1100, 'triangle', 0.1, 0.4); // Shoot sound
+            setTimeout(attackSystem, 550);
+        }
+
+        function engine() {
+            if(!running) return;
+            
+            // Independent Gravity Physics
+            hvel += gravity; hy += hvel;
+            lnvel += gravity; lny += lnvel;
+
+            // Boundaries
+            if(hy > window.innerHeight - 150) hy = window.innerHeight - 150;
+            if(lny > window.innerHeight - 170) lny = window.innerHeight - 170;
+            if(hy < 100) hy = 100;
+            if(lny < 100) lny = 100;
+            
+            h.style.top = hy + 'px';
+            ln.style.top = lny + 'px';
+
+            // Enemy Collision Logic
+            enemies.forEach((en, i) => {
+                en.x -= en.s; en.el.style.left = en.x + 'px';
+                
+                // Detection for both separated characters
+                let hitHattori = (en.x < 300 && en.x > 180 && Math.abs(en.y - hy) < 90);
+                let hitLady = (en.x < 120 && en.x > 20 && Math.abs(en.y - lny) < 100);
+
+                if(hitHattori || hitLady) {
+                    hp -= 25; fill.style.width = hp + '%';
+                    playSfx(100, 'sawtooth', 0.6, 0.9); // Damage sound
+                    en.el.remove(); enemies.splice(i, 1);
+                    if(hp <= 0) endGame();
+                }
+                if(en.x < -200) { en.el.remove(); enemies.splice(i, 1); }
+            });
+
+            // Weapons Collision
+            weapons.forEach((w, i) => {
+                w.x += 18; w.el.style.left = w.x + 'px';
+                enemies.forEach((en, ei) => {
+                    if(w.x > en.x && w.x < en.x + 120 && Math.abs(w.y - (en.y + 60)) < 90) {
+                        score += 10; scEl.innerText = score;
+                        playSfx(1500, 'sine', 0.2, 0.5); // Kill sound
+                        w.el.remove(); en.el.remove();
+                        weapons.splice(i, 1); enemies.splice(ei, 1);
+                    }
+                });
+                if(w.x > window.innerWidth) { w.el.remove(); weapons.splice(i, 1); }
+            });
+
+            requestAnimationFrame(engine);
+        }
+
+        function endGame() {
+            running = false;
+            playSfx(80, 'square', 1.2, 1.0); // Game Over sound
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('overlay').querySelector('h1').innerText = "MISSION FAILED";
+            document.getElementById('overlay').querySelector('p').innerText = "Team Defeated. Final Score: " + score;
+            document.querySelector('.start-btn').innerText = "RE-DEPLOY";
+        }
+    </script>
+</body>
+</html>
